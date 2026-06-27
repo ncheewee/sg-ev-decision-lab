@@ -13,6 +13,7 @@ assert.equal(context.roadTax(250), 3398);
 
 const html = fs.readFileSync(new URL("./index.html", import.meta.url), "utf8");
 assert(html.includes("Dealer interrogation list"));
-assert(html.includes("AI page importer"));
+assert(!html.includes("Add a car"));
+assert(!html.includes("AI page importer"));
 assert(html.includes("app.js"));
 console.log("All calculator checks passed.");

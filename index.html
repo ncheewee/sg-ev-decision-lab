@@ -20,7 +20,6 @@
       <div class="topbar-actions">
         <span class="freshness"><i></i> Data snapshot: 27 Jun 2026</span>
         <button class="button button-ghost" id="resetButton">Reset</button>
-        <button class="button button-dark" data-open-add>Add a car <span>＋</span></button>
       </div>
     </header>
 
@@ -35,7 +34,7 @@
       </section>
 
       <nav class="section-nav" aria-label="Page sections">
-        <a href="#tco">TCO</a><a href="#comparison">Full comparison</a><a href="#questions">Dealer checklist</a><a href="#add-car">Add cars</a>
+        <a href="#tco">TCO</a><a href="#comparison">Full comparison</a><a href="#questions">Dealer checklist</a>
       </nav>
 
       <section class="panel assumptions" aria-labelledby="assumptionsTitle">
@@ -84,59 +83,12 @@
         <div class="panel checklist-panel" id="dealerChecklist"></div>
       </section>
 
-      <section id="add-car" class="section-block add-car-section">
-        <div class="section-heading">
-          <div><p class="eyebrow">EXTENSIBLE</p><h2>Bring another contender</h2></div>
-          <p>Add cars manually now, import structured JSON, or connect a private serverless AI extractor later.</p>
-        </div>
-        <div class="import-options">
-          <article class="import-card">
-            <span class="number">01</span><h3>Manual</h3><p>Fastest and most reliable. Enter the dealer quote and core specifications.</p><button class="button button-dark" data-open-add>Add manually</button>
-          </article>
-          <article class="import-card">
-            <span class="number">02</span><h3>Paste JSON</h3><p>Import structured data produced by any AI or copied from another calculator.</p><button class="button button-ghost" id="openJsonImport">Paste JSON</button>
-          </article>
-          <article class="import-card accent-card">
-            <span class="number">03</span><h3>AI page importer</h3><p>Use Gemini or DeepSeek through a private serverless endpoint. API keys never enter this page.</p><button class="button button-accent" id="openAiImport">Configure importer</button>
-          </article>
-        </div>
-      </section>
-
       <footer>
         <p>Built for decision quality—not dealer brochure arithmetic.</p>
         <p>Figures are indicative. Confirm price, equipment, tax and warranty in the signed sales agreement.</p>
       </footer>
     </main>
   </div>
-
-  <dialog id="carDialog">
-    <form method="dialog" id="carForm">
-      <div class="dialog-head"><div><p class="eyebrow">NEW CONTENDER</p><h2>Add a car</h2></div><button class="icon-button" value="cancel" aria-label="Close">×</button></div>
-      <div class="dialog-grid" id="carFormFields"></div>
-      <div class="dialog-actions"><button class="button button-ghost" value="cancel">Cancel</button><button class="button button-dark" id="saveCar" value="default">Save car</button></div>
-    </form>
-  </dialog>
-
-  <dialog id="jsonDialog">
-    <form method="dialog" id="jsonForm">
-      <div class="dialog-head"><div><p class="eyebrow">STRUCTURED IMPORT</p><h2>Paste car JSON</h2></div><button class="icon-button" value="cancel">×</button></div>
-      <p class="dialog-copy">Paste one car object. Missing fields remain editable after import.</p>
-      <textarea id="jsonInput" rows="15" spellcheck="false"></textarea>
-      <p class="form-error" id="jsonError"></p>
-      <div class="dialog-actions"><button type="button" class="button button-ghost" id="copyJsonExample">Copy example</button><button class="button button-dark" id="importJson" value="default">Import</button></div>
-    </form>
-  </dialog>
-
-  <dialog id="aiDialog">
-    <form method="dialog" id="aiForm">
-      <div class="dialog-head"><div><p class="eyebrow">PRIVATE SERVERLESS IMPORT</p><h2>Import from a car page</h2></div><button class="icon-button" value="cancel">×</button></div>
-      <p class="dialog-copy">Deploy the included Cloudflare Worker, store your Gemini or DeepSeek key there, then paste its endpoint below.</p>
-      <label>Importer endpoint<input id="importEndpoint" type="url" placeholder="https://sg-ev-importer.your-name.workers.dev"></label>
-      <label>Car/specification page URL<input id="importUrl" type="url" placeholder="https://dealer.example/car/specifications"></label>
-      <div class="import-status" id="importStatus"></div>
-      <div class="dialog-actions"><button class="button button-ghost" value="cancel">Cancel</button><button class="button button-accent" id="runImport" value="default">Extract car</button></div>
-    </form>
-  </dialog>
 
   <div class="toast" id="toast" role="status"></div>
   <script src="app.js"></script>

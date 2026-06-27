@@ -103,7 +103,10 @@ const money = new Intl.NumberFormat("en-SG", { style: "currency", currency: "SGD
 const number = new Intl.NumberFormat("en-SG", { maximumFractionDigits: 1 });
 const clone = value => JSON.parse(JSON.stringify(value));
 const stored = JSON.parse(localStorage.getItem("sgEvDecisionLab") || "null");
-let state = stored || clone(SNAPSHOT);
+let state = {
+  assumptions: { ...SNAPSHOT.assumptions, ...(stored?.assumptions || {}) },
+  cars: SNAPSHOT.cars.map(base => ({ ...base, ...(stored?.cars?.find(car => car.id === base.id) || {}) }))
+};
 let activeFilter = "All";
 let activeDealer = state.cars[0]?.id;
 
@@ -149,13 +152,12 @@ function renderResults() {
   const ranked=[...state.cars].sort((a,b)=>metrics(a).tco-metrics(b).tco);
   const best=ranked[0], bestM=metrics(best), second=ranked[1], delta=second?metrics(second).tco-bestM.tco:0;
   document.querySelector("#heroVerdict").innerHTML=`<span class="label">CURRENT TCO WINNER</span><h2>${best.make} ${best.name}</h2><div class="verdict-price">${money.format(bestM.tco)} <small>over ${state.assumptions.years} years</small></div><p>${second?`It is <strong>${money.format(delta)} cheaper</strong> than the next car under your assumptions.`:"Add another car to create a comparison."}</p>`;
-  document.querySelector("#carCards").innerHTML=state.cars.map(car=>{const m=metrics(car);return `<article class="car-card ${car.id===best.id?"best":""}">${car.id===best.id?'<span class="rank-tag">LOWEST TCO</span>':""}<span class="make">${car.make} · CAT ${car.category}</span><h3>${car.name}</h3><div class="tco-number">${money.format(m.tco)}<small>${state.assumptions.years}-year total · ${money.format(m.monthly)}/month</small></div><div class="card-stats"><span>Latest-COE price<strong>${money.format(m.adjustedPrice)}</strong></span><span>Energy / year<strong>${money.format(m.annualEnergy)}</strong></span><span>Road tax / year<strong>${money.format(m.annualTax)}</strong></span><span>Cost / km<strong>$${m.costKm.toFixed(2)}</strong></span></div>${SNAPSHOT.cars.some(c=>c.id===car.id)?"":`<button class="delete-car" data-delete-car="${car.id}">Remove</button>`}</article>`}).join("");
+  document.querySelector("#carCards").innerHTML=state.cars.map(car=>{const m=metrics(car);return `<article class="car-card ${car.id===best.id?"best":""}">${car.id===best.id?'<span class="rank-tag">LOWEST TCO</span>':""}<span class="make">${car.make} · CAT ${car.category}</span><h3>${car.name}</h3><div class="tco-number">${money.format(m.tco)}<small>${state.assumptions.years}-year total · ${money.format(m.monthly)}/month</small></div><div class="card-stats"><span>Latest-COE price<strong>${money.format(m.adjustedPrice)}</strong></span><span>Energy / year<strong>${money.format(m.annualEnergy)}</strong></span><span>Road tax / year<strong>${money.format(m.annualTax)}</strong></span><span>Cost / km<strong>$${m.costKm.toFixed(2)}</strong></span></div></article>`}).join("");
   const max=Math.max(...state.cars.map(c=>metrics(c).tco));
   document.querySelector("#costChart").innerHTML=state.cars.map(car=>{const m=metrics(car), years=state.assumptions.years, energy=m.annualEnergy*years,tax=m.annualTax*years,other=state.assumptions.insurance*years+(car.maintenanceAnnual||0)*years+(car.tyresTenYear||0)*(years/10)+(car.financeCost||0);return `<div class="chart-row"><div class="chart-name">${car.make} ${car.name}</div><div class="stacked-bar" style="max-width:${m.tco/max*100}%"><i class="bar-purchase" style="width:${m.adjustedPrice/m.tco*100}%"></i><i class="bar-energy" style="width:${energy/m.tco*100}%"></i><i class="bar-tax" style="width:${tax/m.tco*100}%"></i><i class="bar-other" style="width:${other/m.tco*100}%"></i></div><div class="chart-total">${money.format(m.tco)}</div></div>`}).join("");
   const air=state.cars.find(c=>c.id==="xpeng-g6-air"), pro=state.cars.find(c=>c.id==="xpeng-g6-pro"), ht=state.cars.find(c=>c.id==="hyptec-ht-premium");
   const upgrade=air&&pro?metrics(pro).monthly-metrics(air).monthly:0, htPro=ht&&pro?Math.abs(metrics(ht).tco-metrics(pro).tco):0;
   document.querySelector("#analysisGrid").innerHTML=`<article class="analysis-card"><p class="eyebrow">FINANCIAL PICK</p><h3>${air?"G6 Air":"Lowest TCO"}</h3><p>${air&&pro?`The Pro experience costs about <strong>${money.format(upgrade)}/month</strong> extra. The Air also carries cheaper 18-inch tyres.`:"The lowest-cost car changes live with your inputs."}</p></article><article class="analysis-card"><p class="eyebrow">ALL-ROUNDER</p><h3>${pro?"G6 Pro":"Balance"}</h3><p>Pay for the Pro if richer seats, stronger ADAS hardware and performance will matter every day—not for its modest range gain alone.</p></article><article class="analysis-card"><p class="eyebrow">COMFORT PICK</p><h3>${ht?"Hyptec HT":"Cabin"}</h3><p>${ht&&pro?`Only <strong>${money.format(htPro)}</strong> separates the HT and Pro over the full term. Let rear comfort versus software decide.`:"Compare cabin comfort independently from cost."}</p></article>`;
-  document.querySelectorAll("[data-delete-car]").forEach(b=>b.addEventListener("click",()=>{state.cars=state.cars.filter(c=>c.id!==b.dataset.deleteCar); save(); activeDealer=state.cars[0]?.id; renderAll();}));
   renderComparison();
 }
 
@@ -177,26 +179,9 @@ function renderChecklist(){
   document.querySelectorAll("[data-dealer]").forEach(b=>b.addEventListener("click",()=>{activeDealer=b.dataset.dealer;renderChecklist();})); document.querySelectorAll("[data-check-key]").forEach(c=>c.addEventListener("change",()=>{localStorage.setItem(c.dataset.checkKey,c.checked?"1":"0");renderChecklist();}));
 }
 
-const formFields=[
-  ["Make","make","text"],["Model / variant","name","text"],["COE category","category","select"],["Published price","publishedPrice","number"],["COE embedded in price","embeddedCoe","number"],["Power (kW)","powerKw","number"],["Efficiency (km/kWh)","efficiency","number"],["Battery (kWh)","batteryKwh","number"],["WLTP range (km)","rangeKm","number"],["DC charging (kW)","dcKw","number"],["Annual maintenance","maintenanceAnnual","number"],["Terminal value","terminalValue","number"]
-];
-function openCarDialog(prefill={}){document.querySelector("#carFormFields").innerHTML=formFields.map(([label,key,type])=>`<label>${label}${type==="select"?`<select name="${key}"><option>A</option><option>B</option></select>`:`<input name="${key}" type="${type}" step="any" value="${prefill[key]??""}" ${["make","name","publishedPrice","embeddedCoe","powerKw","efficiency"].includes(key)?"required":""}>`}</label>`).join("");document.querySelector("#carDialog").showModal();}
-function normaliseCar(raw){const slug=`${raw.make||"car"}-${raw.name||Date.now()}`.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");return {...raw,id:`${slug}-${Date.now().toString(36)}`,make:String(raw.make||"OTHER").toUpperCase(),name:String(raw.name||"Unnamed car"),category:raw.category==="A"?"A":"B",publishedPrice:Number(raw.publishedPrice)||0,embeddedCoe:Number(raw.embeddedCoe)||0,powerKw:Number(raw.powerKw)||0,efficiency:Number(raw.efficiency)||5,batteryKwh:Number(raw.batteryKwh)||0,rangeKm:Number(raw.rangeKm)||0,dcKw:Number(raw.dcKw)||0,maintenanceAnnual:Number(raw.maintenanceAnnual)||0,terminalValue:Number(raw.terminalValue)||0,tyresTenYear:Number(raw.tyresTenYear)||0,financeCost:Number(raw.financeCost)||0,take:raw.take||"New contender—verify imported specifications with the dealer."};}
-function addCar(raw){const car=normaliseCar(raw);state.cars.push(car);activeDealer=car.id;save();renderAll();toast(`${car.make} ${car.name} added`);}
-
-function bindDialogs(){
-  document.querySelectorAll("[data-open-add]").forEach(b=>b.addEventListener("click",()=>openCarDialog()));
-  document.querySelector("#carForm").addEventListener("submit",e=>{if(e.submitter?.value==="cancel")return; e.preventDefault();const data=Object.fromEntries(new FormData(e.target));addCar(data);document.querySelector("#carDialog").close();});
-  document.querySelector("#openJsonImport").addEventListener("click",()=>{document.querySelector("#jsonError").textContent="";document.querySelector("#jsonDialog").showModal();});
-  document.querySelector("#jsonForm").addEventListener("submit",e=>{if(e.submitter?.value==="cancel")return;e.preventDefault();try{addCar(JSON.parse(document.querySelector("#jsonInput").value));document.querySelector("#jsonDialog").close();}catch(err){document.querySelector("#jsonError").textContent=`Could not import: ${err.message}`;}});
-  document.querySelector("#copyJsonExample").addEventListener("click",()=>{const example={make:"BYD",name:"Sealion 7 Premium",category:"B",publishedPrice:0,embeddedCoe:state.assumptions.catB,powerKw:230,efficiency:5.0,batteryKwh:82.5,rangeKm:482,dcKw:150,terminalValue:0};navigator.clipboard.writeText(JSON.stringify(example,null,2));toast("Example JSON copied");});
-  document.querySelector("#openAiImport").addEventListener("click",()=>{document.querySelector("#importEndpoint").value=localStorage.getItem("sgEvImporterEndpoint")||"";document.querySelector("#aiDialog").showModal();});
-  document.querySelector("#aiForm").addEventListener("submit",async e=>{if(e.submitter?.value==="cancel")return;e.preventDefault();const endpoint=document.querySelector("#importEndpoint").value.replace(/\/$/,""),url=document.querySelector("#importUrl").value,status=document.querySelector("#importStatus");if(!endpoint||!url){status.textContent="Enter both the endpoint and car-page URL.";return;}localStorage.setItem("sgEvImporterEndpoint",endpoint);status.textContent="Fetching and extracting specifications…";e.submitter.disabled=true;try{const res=await fetch(`${endpoint}/extract`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({url})});const body=await res.json();if(!res.ok)throw new Error(body.error||`HTTP ${res.status}`);addCar(body.car||body);document.querySelector("#aiDialog").close();}catch(err){status.textContent=`Import failed: ${err.message}`;}finally{e.submitter.disabled=false;}});
-}
-
 function renderAll(){renderAssumptions();renderResults();renderChecklist();}
 document.querySelector("#resetButton").addEventListener("click",()=>{if(confirm("Reset cars, assumptions and advanced costs to the June 2026 snapshot?")){state=clone(SNAPSHOT);save();activeDealer=state.cars[0].id;renderAll();toast("Calculator reset");}});
 document.querySelector("#printChecklist").addEventListener("click",()=>window.print());
-bindDialogs();renderAll();
+renderAll();
 
 window.SGEV = { roadTax, metrics: car => metrics(car), snapshot: clone(SNAPSHOT) };

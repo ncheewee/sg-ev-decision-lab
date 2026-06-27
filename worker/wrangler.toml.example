@@ -1,0 +1,13 @@
+name = "sg-ev-importer"
+main = "worker.js"
+compatibility_date = "2026-06-01"
+
+[vars]
+AI_PROVIDER = "gemini"
+GEMINI_MODEL = "gemini-2.5-flash"
+ALLOWED_ORIGIN = "https://YOUR-GITHUB-USERNAME.github.io"
+
+# Store keys with secrets, never here:
+# npx wrangler secret put GEMINI_API_KEY
+# or
+# npx wrangler secret put DEEPSEEK_API_KEY

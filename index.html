@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Singapore EV comparison and ten-year total cost calculator.">
+  <title>SG EV Decision Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="topbar">
+      <a class="brand" href="#top" aria-label="SG EV Decision Lab home">
+        <span class="brand-mark">EV</span>
+        <span><strong>SG Decision Lab</strong><small>Singapore ownership, properly costed</small></span>
+      </a>
+      <div class="topbar-actions">
+        <span class="freshness"><i></i> Data snapshot: 27 Jun 2026</span>
+        <button class="button button-ghost" id="resetButton">Reset</button>
+        <button class="button button-dark" data-open-add>Add a car <span>＋</span></button>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">YOUR NOV 2026 CAR DECISION</p>
+          <h1>Three EVs.<br><em>One honest number.</em></h1>
+          <p class="hero-copy">Compare the Hyptec HT Premium and XPeng G6 variants using Singapore-specific COE, road tax and your real driving habits.</p>
+        </div>
+        <div class="hero-verdict" id="heroVerdict"></div>
+      </section>
+
+      <nav class="section-nav" aria-label="Page sections">
+        <a href="#tco">TCO</a><a href="#comparison">Full comparison</a><a href="#questions">Dealer checklist</a><a href="#add-car">Add cars</a>
+      </nav>
+
+      <section class="panel assumptions" aria-labelledby="assumptionsTitle">
+        <div class="section-heading compact">
+          <div><p class="eyebrow">LIVE MODEL</p><h2 id="assumptionsTitle">Editable assumptions</h2></div>
+          <p>Every change recalculates instantly and stays on this device.</p>
+        </div>
+        <div class="input-grid" id="assumptionInputs"></div>
+        <details class="advanced-inputs">
+          <summary>Advanced costs <span>maintenance, tyres, finance and terminal value</span></summary>
+          <div id="advancedInputs"></div>
+        </details>
+      </section>
+
+      <section id="tco" class="section-block">
+        <div class="section-heading">
+          <div><p class="eyebrow">10-YEAR VIEW</p><h2>The number that matters</h2></div>
+          <p>Purchase price is normalised to the latest COE entered above. Parking and ERP are excluded because they do not change the choice.</p>
+        </div>
+        <div class="car-cards" id="carCards"></div>
+        <div class="panel chart-panel">
+          <div class="chart-head"><h3>Cost composition</h3><div class="legend"><span class="purchase">Purchase</span><span class="energy">Energy</span><span class="tax">Road tax</span><span class="other">Other</span></div></div>
+          <div id="costChart"></div>
+        </div>
+        <div class="analysis-grid" id="analysisGrid"></div>
+      </section>
+
+      <section id="comparison" class="section-block">
+        <div class="section-heading">
+          <div><p class="eyebrow">SIDE BY SIDE</p><h2>Every decision-relevant detail</h2></div>
+          <p>Click a category to narrow the table. “Verify” means the dealer should put it in writing.</p>
+        </div>
+        <div class="filter-row" id="comparisonFilters"></div>
+        <div class="comparison-wrap"><table id="comparisonTable"></table></div>
+      </section>
+
+      <section id="questions" class="section-block">
+        <div class="section-heading">
+          <div><p class="eyebrow">BEFORE YOU SIGN</p><h2>Dealer interrogation list</h2></div>
+          <p>Check items off during each showroom visit. Progress is saved separately for every car.</p>
+        </div>
+        <div class="checklist-toolbar">
+          <div id="dealerTabs" class="dealer-tabs"></div>
+          <button class="button button-ghost" id="printChecklist">Print checklist</button>
+        </div>
+        <div class="panel checklist-panel" id="dealerChecklist"></div>
+      </section>
+
+      <section id="add-car" class="section-block add-car-section">
+        <div class="section-heading">
+          <div><p class="eyebrow">EXTENSIBLE</p><h2>Bring another contender</h2></div>
+          <p>Add cars manually now, import structured JSON, or connect a private serverless AI extractor later.</p>
+        </div>
+        <div class="import-options">
+          <article class="import-card">
+            <span class="number">01</span><h3>Manual</h3><p>Fastest and most reliable. Enter the dealer quote and core specifications.</p><button class="button button-dark" data-open-add>Add manually</button>
+          </article>
+          <article class="import-card">
+            <span class="number">02</span><h3>Paste JSON</h3><p>Import structured data produced by any AI or copied from another calculator.</p><button class="button button-ghost" id="openJsonImport">Paste JSON</button>
+          </article>
+          <article class="import-card accent-card">
+            <span class="number">03</span><h3>AI page importer</h3><p>Use Gemini or DeepSeek through a private serverless endpoint. API keys never enter this page.</p><button class="button button-accent" id="openAiImport">Configure importer</button>
+          </article>
+        </div>
+      </section>
+
+      <footer>
+        <p>Built for decision quality—not dealer brochure arithmetic.</p>
+        <p>Figures are indicative. Confirm price, equipment, tax and warranty in the signed sales agreement.</p>
+      </footer>
+    </main>
+  </div>
+
+  <dialog id="carDialog">
+    <form method="dialog" id="carForm">
+      <div class="dialog-head"><div><p class="eyebrow">NEW CONTENDER</p><h2>Add a car</h2></div><button class="icon-button" value="cancel" aria-label="Close">×</button></div>
+      <div class="dialog-grid" id="carFormFields"></div>
+      <div class="dialog-actions"><button class="button button-ghost" value="cancel">Cancel</button><button class="button button-dark" id="saveCar" value="default">Save car</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="jsonDialog">
+    <form method="dialog" id="jsonForm">
+      <div class="dialog-head"><div><p class="eyebrow">STRUCTURED IMPORT</p><h2>Paste car JSON</h2></div><button class="icon-button" value="cancel">×</button></div>
+      <p class="dialog-copy">Paste one car object. Missing fields remain editable after import.</p>
+      <textarea id="jsonInput" rows="15" spellcheck="false"></textarea>
+      <p class="form-error" id="jsonError"></p>
+      <div class="dialog-actions"><button type="button" class="button button-ghost" id="copyJsonExample">Copy example</button><button class="button button-dark" id="importJson" value="default">Import</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="aiDialog">
+    <form method="dialog" id="aiForm">
+      <div class="dialog-head"><div><p class="eyebrow">PRIVATE SERVERLESS IMPORT</p><h2>Import from a car page</h2></div><button class="icon-button" value="cancel">×</button></div>
+      <p class="dialog-copy">Deploy the included Cloudflare Worker, store your Gemini or DeepSeek key there, then paste its endpoint below.</p>
+      <label>Importer endpoint<input id="importEndpoint" type="url" placeholder="https://sg-ev-importer.your-name.workers.dev"></label>
+      <label>Car/specification page URL<input id="importUrl" type="url" placeholder="https://dealer.example/car/specifications"></label>
+      <div class="import-status" id="importStatus"></div>
+      <div class="dialog-actions"><button class="button button-ghost" value="cancel">Cancel</button><button class="button button-accent" id="runImport" value="default">Extract car</button></div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status"></div>
+  <script src="app.js"></script>
+</body>
+</html>

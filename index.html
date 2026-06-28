@@ -18,7 +18,7 @@
         <span><strong>SG Decision Lab</strong><small>Singapore ownership, properly costed</small></span>
       </a>
       <div class="topbar-actions">
-        <span class="freshness"><i></i> Data snapshot: 27 Jun 2026</span>
+        <span class="freshness"><i></i> Data snapshot: 28 Jun 2026</span>
         <button class="button button-ghost" id="resetButton">Reset</button>
       </div>
     </header>
@@ -27,15 +27,24 @@
       <section class="hero">
         <div>
           <p class="eyebrow">YOUR NOV 2026 CAR DECISION</p>
-          <h1>Three EVs.<br><em>One honest number.</em></h1>
-          <p class="hero-copy">Compare the Hyptec HT Premium and XPeng G6 variants using Singapore-specific COE, road tax and your real driving habits.</p>
+          <h1>Pick the cars.<br><em>Find your number.</em></h1>
+          <p class="hero-copy">Compare Hyptec, XPeng and Tesla using Singapore-specific COE, road tax and your real driving habits.</p>
         </div>
         <div class="hero-verdict" id="heroVerdict"></div>
       </section>
 
       <nav class="section-nav" aria-label="Page sections">
-        <a href="#tco">TCO</a><a href="#comparison">Full comparison</a><a href="#questions">Dealer checklist</a>
+        <a href="#models">Choose cars</a><a href="#tco">TCO</a><a href="#comparison">Full comparison</a><a href="#questions">Dealer checklist</a>
       </nav>
+
+      <section id="models" class="panel model-selector" aria-labelledby="modelSelectorTitle">
+        <div class="model-selector-head">
+          <div><p class="eyebrow">YOUR SHORTLIST</p><h2 id="modelSelectorTitle">Choose the side-by-side</h2></div>
+          <div class="model-selector-actions"><span id="selectedCount"></span><button class="text-button" data-model-preset="original">Original 3</button><button class="text-button" data-model-preset="tesla">Tesla 4</button><button class="text-button" data-model-preset="all">All 7</button></div>
+        </div>
+        <div class="model-picker" id="modelPicker"></div>
+        <p class="model-selector-note">Select at least two. Your TCO cards, offers, specification table and dealer checklist update together.</p>
+      </section>
 
       <section class="panel assumptions" aria-labelledby="assumptionsTitle">
         <div class="section-heading compact">

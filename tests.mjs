@@ -17,6 +17,7 @@ assert(html.includes("Dealer interrogation list"));
 assert(!html.includes("Add a car"));
 assert(!html.includes("AI page importer"));
 assert(html.includes("app.js"));
+assert(html.includes("Dealer final offers"));
 assert(css.includes("tbody th:not([colspan])"));
 assert(css.includes("tr.category-row th { position:relative; z-index:1"));
 console.log("All calculator checks passed.");

@@ -8,7 +8,7 @@ const SNAPSHOT = {
       suspension: "Double wishbone / five-link", seats: "Nappa; ventilated + massage front", displays: "14.6-inch centre + HUD", audio: "22-speaker Dolby Atmos", mirror: "Conventional",
       processor: "Not disclosed", sensors: "360° camera; inventory to verify", carplay: "Wired; verify wireless OTA", adas: "ACC, AEB, LKA, BSM, driver monitoring", airbags: "6",
       warranty: "8 yr / 160,000 km reported", batteryWarranty: "First-owner ‘Three Electrics’ lifetime offer—verify", service: "10 yr / 200,000 km free servicing reported—verify",
-      roadTaxOverride: 3398, arf: 19900, terminalValue: 995, maintenanceAnnual: 0, tyresTenYear: 0, financeCost: 0,
+      roadTaxOverride: 3398, arf: 19900, dealerOffer: 0, terminalValue: 995, maintenanceAnnual: 0, tyresTenYear: 0, financeCost: 0,
       take: "Best for rear-cabin comfort and sheer space. Its 250 kW road tax is the recurring sting."
     },
     {
@@ -18,7 +18,7 @@ const SNAPSHOT = {
       suspension: "Double wishbone / multi-link", seats: "Vegan leather; heated + ventilated", displays: "10.25-inch + 15.6-inch", audio: "18-speaker Xopera, 960W", mirror: "Conventional",
       processor: "MediaTek 8676", sensors: "5 cameras + 4 radars", carplay: "Wireless CarPlay + Android Auto", adas: "XPILOT, auto park; reduced LCC perception", airbags: "Verify local spec",
       warranty: "5 yr / 120,000 km", batteryWarranty: "8 yr / 160,000 km; ≥70% capacity", service: "Paid; request schedule and package",
-      roadTaxOverride: 1560, arf: 0, terminalValue: 0, maintenanceAnnual: 0, tyresTenYear: 0, financeCost: 0,
+      roadTaxOverride: 1560, arf: 0, dealerOffer: 0, terminalValue: 0, maintenanceAnnual: 0, tyresTenYear: 0, financeCost: 0,
       take: "The rational Singapore choice: lowest TCO, ample torque and most of the G6 experience."
     },
     {
@@ -28,14 +28,14 @@ const SNAPSHOT = {
       suspension: "Double wishbone / multi-link", seats: "Nappa; heated, ventilated + massage", displays: "10.25-inch + 15.6-inch", audio: "18-speaker Xopera, 960W", mirror: "Digital streaming",
       processor: "Snapdragon SA8295", sensors: "12 cameras + 5 radars", carplay: "Wireless CarPlay + Android Auto", adas: "Full local XPILOT + auto park", airbags: "Verify local spec",
       warranty: "5 yr / 120,000 km", batteryWarranty: "8 yr / 160,000 km; ≥70% capacity", service: "Paid; request schedule and package",
-      roadTaxOverride: 2194, arf: 11181, terminalValue: 559, maintenanceAnnual: 0, tyresTenYear: 0, financeCost: 0,
+      roadTaxOverride: 2194, arf: 11181, dealerOffer: 0, terminalValue: 559, maintenanceAnnual: 0, tyresTenYear: 0, financeCost: 0,
       take: "Best all-round car: much quicker, richer cabin and stronger sensor hardware, but not the TCO winner."
     }
   ]
 };
 
 const comparisonRows = [
-  ["Price & tax", "COE category", "category"], ["Price & tax", "Published price", "publishedPrice", "money"], ["Price & tax", "Price at entered COE", "adjustedPrice", "money"], ["Price & tax", "Annual road tax", "annualTax", "money"],
+  ["Price & tax", "COE category", "category"], ["Price & tax", "Published price", "publishedPrice", "money"], ["Price & tax", "COE-adjusted benchmark", "adjustedPrice", "money"], ["Price & tax", "TCO purchase price", "purchasePrice", "money", "low"], ["Price & tax", "Annual road tax", "annualTax", "money"],
   ["Performance", "Power", "powerKw", "kw"], ["Performance", "Torque", "torqueNm", "nm"], ["Performance", "0–100 km/h", "zeroTo100", "seconds", "low"], ["Performance", "Top speed", "topSpeed", "kmh"], ["Performance", "Driven wheels", "drive"],
   ["Battery & charging", "Battery", "batteryKwh", "kwh"], ["Battery & charging", "Chemistry", "batteryType"], ["Battery & charging", "WLTP range", "rangeKm", "km"], ["Battery & charging", "Rated efficiency", "efficiency", "kmkwh", "high"], ["Battery & charging", "AC charging", "acKw", "kw"], ["Battery & charging", "Peak DC charging", "dcKw", "kw"], ["Battery & charging", "Fast-charge claim", "fastCharge"],
   ["Dimensions", "Length", "length", "mm"], ["Dimensions", "Width", "width", "mm"], ["Dimensions", "Height", "height", "mm"], ["Dimensions", "Wheelbase", "wheelbase", "mm"], ["Dimensions", "Kerb weight", "weight", "kg", "low"], ["Dimensions", "Boot", "boot", "litres"], ["Dimensions", "Wheels", "wheels"], ["Dimensions", "Suspension", "suspension"],
@@ -123,12 +123,13 @@ function metrics(car) {
   const a = state.assumptions;
   const coe = car.category === "A" ? a.catA : a.catB;
   const adjustedPrice = car.publishedPrice - car.embeddedCoe + coe;
+  const purchasePrice = Number(car.dealerOffer) > 0 ? Number(car.dealerOffer) : adjustedPrice;
   const annualEnergy = (a.annualKm / car.efficiency) * a.electricity;
   const annualTax = car.roadTaxOverride || roadTax(car.powerKw);
   const running = a.years * (annualEnergy + annualTax + a.insurance + (car.maintenanceAnnual || 0));
   const other = (car.tyresTenYear || 0) * (a.years / 10) + (car.financeCost || 0);
-  const tco = adjustedPrice + running + other - (car.terminalValue || 0);
-  return { adjustedPrice, annualEnergy, annualTax, running, other, tco, monthly: tco/(a.years*12), costKm: tco/(a.years*a.annualKm) };
+  const tco = purchasePrice + running + other - (car.terminalValue || 0);
+  return { adjustedPrice, purchasePrice, offerApplied: Number(car.dealerOffer) > 0, annualEnergy, annualTax, running, other, tco, monthly: tco/(a.years*12), costKm: tco/(a.years*a.annualKm) };
 }
 
 function save() { localStorage.setItem("sgEvDecisionLab", JSON.stringify(state)); }
@@ -142,6 +143,8 @@ function renderAssumptions() {
     inputField("Cat A COE", "catA", a.catA, "$"), inputField("Cat B COE", "catB", a.catB, "$"), inputField("Insurance / car", "insurance", a.insurance, "$", "/yr")
   ].join("");
   document.querySelectorAll("[data-assumption]").forEach(el=>el.addEventListener("input", e=>{ state.assumptions[e.target.dataset.assumption]=Number(e.target.value)||0; save(); renderResults(); }));
+  document.querySelector("#offerInputs").innerHTML = state.cars.map(car => { const m=metrics(car); return `<div class="field"><label for="offer-${car.id}">${car.make} ${car.name}</label><div class="input-shell offer-input"><span>$</span><input id="offer-${car.id}" data-dealer-offer="${car.id}" type="number" step="1" min="0" inputmode="numeric" value="${car.dealerOffer||""}" placeholder="${Math.round(m.adjustedPrice)}"></div></div>`; }).join("");
+  document.querySelectorAll("[data-dealer-offer]").forEach(el=>el.addEventListener("input", e=>{ const car=state.cars.find(c=>c.id===e.target.dataset.dealerOffer); car.dealerOffer=Number(e.target.value)||0; save(); renderResults(); }));
   document.querySelector("#advancedInputs").innerHTML = state.cars.map(car => `<div class="advanced-car"><strong>${car.make} ${car.name}</strong>${carCostField(car,"Maintenance / year","maintenanceAnnual")}${carCostField(car,"Tyres / 10 years","tyresTenYear")}${carCostField(car,"Finance cost","financeCost")}${carCostField(car,"Terminal value","terminalValue")}</div>`).join("");
   document.querySelectorAll("[data-car-cost]").forEach(el=>el.addEventListener("input", e=>{ const car=state.cars.find(c=>c.id===e.target.dataset.car); car[e.target.dataset.carCost]=Number(e.target.value)||0; save(); renderResults(); }));
 }
@@ -152,9 +155,9 @@ function renderResults() {
   const ranked=[...state.cars].sort((a,b)=>metrics(a).tco-metrics(b).tco);
   const best=ranked[0], bestM=metrics(best), second=ranked[1], delta=second?metrics(second).tco-bestM.tco:0;
   document.querySelector("#heroVerdict").innerHTML=`<span class="label">CURRENT TCO WINNER</span><h2>${best.make} ${best.name}</h2><div class="verdict-price">${money.format(bestM.tco)} <small>over ${state.assumptions.years} years</small></div><p>${second?`It is <strong>${money.format(delta)} cheaper</strong> than the next car under your assumptions.`:"Add another car to create a comparison."}</p>`;
-  document.querySelector("#carCards").innerHTML=state.cars.map(car=>{const m=metrics(car);return `<article class="car-card ${car.id===best.id?"best":""}">${car.id===best.id?'<span class="rank-tag">LOWEST TCO</span>':""}<span class="make">${car.make} · CAT ${car.category}</span><h3>${car.name}</h3><div class="tco-number">${money.format(m.tco)}<small>${state.assumptions.years}-year total · ${money.format(m.monthly)}/month</small></div><div class="card-stats"><span>Latest-COE price<strong>${money.format(m.adjustedPrice)}</strong></span><span>Energy / year<strong>${money.format(m.annualEnergy)}</strong></span><span>Road tax / year<strong>${money.format(m.annualTax)}</strong></span><span>Cost / km<strong>$${m.costKm.toFixed(2)}</strong></span></div></article>`}).join("");
+  document.querySelector("#carCards").innerHTML=state.cars.map(car=>{const m=metrics(car);return `<article class="car-card ${car.id===best.id?"best":""}">${car.id===best.id?'<span class="rank-tag">LOWEST TCO</span>':""}<span class="make">${car.make} · CAT ${car.category}</span><h3>${car.name}</h3><div class="tco-number">${money.format(m.tco)}<small>${state.assumptions.years}-year total · ${money.format(m.monthly)}/month</small></div><div class="card-stats"><span>${m.offerApplied?"Dealer offer":"COE-adjusted benchmark"}<strong>${money.format(m.purchasePrice)}</strong></span><span>Energy / year<strong>${money.format(m.annualEnergy)}</strong></span><span>Road tax / year<strong>${money.format(m.annualTax)}</strong></span><span>Cost / km<strong>$${m.costKm.toFixed(2)}</strong></span></div></article>`}).join("");
   const max=Math.max(...state.cars.map(c=>metrics(c).tco));
-  document.querySelector("#costChart").innerHTML=state.cars.map(car=>{const m=metrics(car), years=state.assumptions.years, energy=m.annualEnergy*years,tax=m.annualTax*years,other=state.assumptions.insurance*years+(car.maintenanceAnnual||0)*years+(car.tyresTenYear||0)*(years/10)+(car.financeCost||0);return `<div class="chart-row"><div class="chart-name">${car.make} ${car.name}</div><div class="stacked-bar" style="max-width:${m.tco/max*100}%"><i class="bar-purchase" style="width:${m.adjustedPrice/m.tco*100}%"></i><i class="bar-energy" style="width:${energy/m.tco*100}%"></i><i class="bar-tax" style="width:${tax/m.tco*100}%"></i><i class="bar-other" style="width:${other/m.tco*100}%"></i></div><div class="chart-total">${money.format(m.tco)}</div></div>`}).join("");
+  document.querySelector("#costChart").innerHTML=state.cars.map(car=>{const m=metrics(car), years=state.assumptions.years, energy=m.annualEnergy*years,tax=m.annualTax*years,other=state.assumptions.insurance*years+(car.maintenanceAnnual||0)*years+(car.tyresTenYear||0)*(years/10)+(car.financeCost||0);return `<div class="chart-row"><div class="chart-name">${car.make} ${car.name}</div><div class="stacked-bar" style="max-width:${m.tco/max*100}%"><i class="bar-purchase" style="width:${m.purchasePrice/m.tco*100}%"></i><i class="bar-energy" style="width:${energy/m.tco*100}%"></i><i class="bar-tax" style="width:${tax/m.tco*100}%"></i><i class="bar-other" style="width:${other/m.tco*100}%"></i></div><div class="chart-total">${money.format(m.tco)}</div></div>`}).join("");
   const air=state.cars.find(c=>c.id==="xpeng-g6-air"), pro=state.cars.find(c=>c.id==="xpeng-g6-pro"), ht=state.cars.find(c=>c.id==="hyptec-ht-premium");
   const upgrade=air&&pro?metrics(pro).monthly-metrics(air).monthly:0, htPro=ht&&pro?Math.abs(metrics(ht).tco-metrics(pro).tco):0;
   document.querySelector("#analysisGrid").innerHTML=`<article class="analysis-card"><p class="eyebrow">FINANCIAL PICK</p><h3>${air?"G6 Air":"Lowest TCO"}</h3><p>${air&&pro?`The Pro experience costs about <strong>${money.format(upgrade)}/month</strong> extra. The Air also carries cheaper 18-inch tyres.`:"The lowest-cost car changes live with your inputs."}</p></article><article class="analysis-card"><p class="eyebrow">ALL-ROUNDER</p><h3>${pro?"G6 Pro":"Balance"}</h3><p>Pay for the Pro if richer seats, stronger ADAS hardware and performance will matter every day—not for its modest range gain alone.</p></article><article class="analysis-card"><p class="eyebrow">COMFORT PICK</p><h3>${ht?"Hyptec HT":"Cabin"}</h3><p>${ht&&pro?`Only <strong>${money.format(htPro)}</strong> separates the HT and Pro over the full term. Let rear comfort versus software decide.`:"Compare cabin comfort independently from cost."}</p></article>`;

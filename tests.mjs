@@ -12,8 +12,11 @@ assert.equal(context.roadTax(218), 2194);
 assert.equal(context.roadTax(250), 3398);
 
 const html = fs.readFileSync(new URL("./index.html", import.meta.url), "utf8");
+const css = fs.readFileSync(new URL("./styles.css", import.meta.url), "utf8");
 assert(html.includes("Dealer interrogation list"));
 assert(!html.includes("Add a car"));
 assert(!html.includes("AI page importer"));
 assert(html.includes("app.js"));
+assert(css.includes("tbody th:not([colspan])"));
+assert(css.includes("tr.category-row th { position:relative; z-index:1"));
 console.log("All calculator checks passed.");
